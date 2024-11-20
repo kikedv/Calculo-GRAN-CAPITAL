@@ -1,8 +1,0 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 20 15:05:28 2024
-
-@author: valde
-"""
-
-streamlit
