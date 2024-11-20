@@ -6,52 +6,73 @@ Created on Wed Nov 20 14:48:06 2024
 """
 
 import streamlit as st
+import math
 
-def calculate_savings(target_capital, initial_capital, years, annual_rate, inflation_rate, tax_rate):
-    """
-    Calcula el ahorro/inversión anual necesario ajustando por inflación y considerando impuestos.
-    """
-    # Ajustar el capital objetivo por inflación
-    inflation_rate = inflation_rate / 100
-    target_capital_adjusted = target_capital * (1 + inflation_rate) ** years
+# Fórmulas para cálculos
+def calculate_final_value(current_value, inflation, years):
+    """Calcula el valor final ajustado por inflación."""
+    return current_value * (1 + inflation / 100) ** years
 
-    # Calcular el ahorro/inversión anual necesario
-    annual_rate = annual_rate / 100
-    tax_rate = tax_rate / 100
-    effective_rate = annual_rate * (1 - tax_rate)  # Ajuste por impuestos
+def calculate_net_value(final_value, tax_rate):
+    """Calcula el valor neto después de impuestos."""
+    return final_value / (1 - tax_rate / 100)
 
-    numerator = target_capital_adjusted - (initial_capital * (1 + effective_rate) ** years)
-    denominator = ((1 + effective_rate) ** years - 1) / effective_rate if effective_rate != 0 else 0
-    
-    if denominator != 0:
-        annual_savings = numerator / denominator
+def calculate_annual_savings(rate, years, initial_capital, net_goal):
+    """Calcula el ahorro anual requerido sin incremento anual."""
+    if rate == 0:
+        return (net_goal - initial_capital) / years
     else:
-        annual_savings = 0
-    
-    return round(annual_savings, 2), round(target_capital_adjusted, 2)
+        return (rate / 100) * (net_goal - initial_capital * (1 + rate / 100) ** years) / \
+               (((1 + rate / 100) ** years - 1) / (rate / 100))
 
-# Configuración de la página
-st.title("Calculadora de Gran Capital (Ajustada por Inflación e Impuestos)")
-st.markdown("Calcule cuánto necesita ahorrar o invertir anualmente para alcanzar su **Gran Capital**, ajustado por inflación y considerando impuestos.")
+def calculate_annual_savings_with_increase(rate, increase_rate, years, initial_capital, net_goal):
+    """Calcula el ahorro anual requerido con incremento anual."""
+    rate = rate / 100
+    increase_rate = increase_rate / 100
+    numerator = net_goal - (initial_capital * (1 + rate) ** years)
+    denominator = (((1 - ((1 + increase_rate) / (1 + rate)) ** years) / (rate - increase_rate)) *
+                   (1 + rate) ** years)
+    return numerator / denominator if denominator != 0 else 0
 
-# Formulario de entrada
-target_capital = st.number_input("Gran Capital Deseado", min_value=0.0, step=1000.0)
-initial_capital = st.number_input("Capital Inicial", min_value=0.0, step=1000.0)
-years = st.number_input("Número de Años", min_value=1, step=1)
-annual_rate = st.number_input("Tasa de Rentabilidad Anual (%)", min_value=0.0, step=0.1)
-inflation_rate = st.number_input("Tasa de Inflación Esperada Anual (%)", min_value=0.0, step=0.1)
-tax_rate = st.number_input("Tasa de Impuestos sobre las Ganancias (%)", min_value=0.0, step=0.1)
+# Título
+st.title("Calculadora de Ahorro para Gran Capital")
 
-# Botón para calcular
-if st.button("Calcular"):
-    if target_capital > 0 and years > 0:
-        annual_savings, adjusted_capital = calculate_savings(
-            target_capital, initial_capital, years, annual_rate, inflation_rate, tax_rate
-        )
-        st.success(f"El ahorro/inversión anual necesario es: ${annual_savings}")
-        st.info(f"El Gran Capital ajustado por inflación será: ${adjusted_capital}")
-    else:
-        st.error("Por favor, asegúrese de ingresar valores válidos para todos los campos.")
+# Entradas del usuario
+st.header("Datos del Objetivo")
+objective = st.text_input("Indica el objetivo que quieres lograr:", placeholder="Ejemplo: Master para mi hijo")
+current_value = st.number_input("Importe actual del objetivo:", min_value=0.0, step=1000.0)
+initial_capital = st.number_input("Capital inicial:", min_value=0.0, step=1000.0)
+years = st.number_input("Número de años:", min_value=1, step=1)
+inflation = st.number_input("Inflación promedio estimada (%):", min_value=0.0, step=0.1)
+tax_rate = st.number_input("Impuestos estimados sobre las ganancias (%):", min_value=0.0, step=0.1)
+
+st.header("Cálculos Intermedios")
+# Cálculo del gran capital y gran capital neto
+final_value = calculate_final_value(current_value, inflation, years)
+net_value = calculate_net_value(final_value, tax_rate)
+
+st.write(f"**Valor final (Gran Capital) antes de impuestos:** ${final_value:,.2f}")
+st.write(f"**Valor final NETO del Gran Capital:** ${net_value:,.2f}")
+
+# Entradas adicionales para los cálculos de ahorro
+st.header("Datos de la Inversión")
+expected_rate = st.number_input("Rentabilidad esperada de la inversión (%):", min_value=0.0, step=0.1)
+annual_increase = st.number_input("Incremento ahorro anual (%):", min_value=0.0, step=0.1)
+
+st.header("Cálculos Finales")
+# Ahorro periódico sin incremento anual
+annual_savings = calculate_annual_savings(expected_rate, years, initial_capital, net_value)
+monthly_savings = annual_savings / 12
+
+st.write(f"**Ahorro periódico anual (sin incremento anual):** ${annual_savings:,.2f}")
+st.write(f"**Ahorro periódico mensual (sin incremento anual):** ${monthly_savings:,.2f}")
+
+# Ahorro periódico con incremento anual
+annual_savings_increase = calculate_annual_savings_with_increase(expected_rate, annual_increase, years, initial_capital, net_value)
+monthly_savings_increase = annual_savings_increase / 12
+
+st.write(f"**Ahorro periódico anual (con incremento anual):** ${annual_savings_increase:,.2f}")
+st.write(f"**Ahorro periódico mensual (con incremento anual):** ${monthly_savings_increase:,.2f}")
 
 st.markdown("---")
 st.markdown("Desarrollado por **Tu Nombre**")
