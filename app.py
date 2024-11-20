@@ -18,12 +18,13 @@ def calculate_net_value(final_value, tax_rate):
     return final_value / (1 - tax_rate / 100)
 
 def calculate_annual_savings(rate, years, initial_capital, net_goal):
-    """Calcula el ahorro anual requerido sin incremento anual."""
+    """Calcula el ahorro anual requerido sin incremento anual usando la fórmula de PAGO."""
+    rate = rate / 100
     if rate == 0:
         return (net_goal - initial_capital) / years
     else:
-        return (rate / 100) * (net_goal - initial_capital * (1 + rate / 100) ** years) / \
-               (((1 + rate / 100) ** years - 1) / (rate / 100))
+        return (rate * (net_goal - initial_capital * (1 + rate) ** years)) / \
+               (1 - (1 + rate) ** -years)
 
 def calculate_annual_savings_with_increase(rate, increase_rate, years, initial_capital, net_goal):
     """Calcula el ahorro anual requerido con incremento anual."""
