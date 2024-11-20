@@ -6,16 +6,7 @@ Created on Wed Nov 20 14:48:06 2024
 """
 
 import streamlit as st
-import math
-
-# Función PAGO para cálculos financieros
-def pago(rate, nper, pv, fv=0, tipo=0):
-    """Simula la función PAGO de Excel para calcular pagos periódicos."""
-    if rate != 0:
-        factor = (1 + rate) ** nper
-        return (rate * (fv + pv * factor)) / ((1 + rate * tipo) * (factor - 1))
-    else:
-        return (fv + pv) / nper
+import numpy_financial as npf
 
 # Fórmulas adicionales
 def calculate_final_value(current_value, inflation, years):
@@ -28,8 +19,7 @@ def calculate_net_value(final_value, tax_rate):
 
 def calculate_annual_savings(rate, years, initial_capital, net_goal):
     """Calcula el ahorro anual requerido sin incremento anual."""
-    rate_decimal = rate / 100
-    return pago(rate_decimal, years, -initial_capital, -net_goal, 0)
+    return npf.pmt(rate / 100, years, -initial_capital, net_goal, 0)
 
 def calculate_annual_savings_with_increase(rate, increase_rate, years, initial_capital, net_goal):
     """Calcula el ahorro anual requerido con incremento anual."""
